@@ -26,7 +26,7 @@ class Utility
     ; check if BnS is the current active window
     GameActive()
     {
-        Return WinActive("ahk_class UnrealWindow")
+        return WinActive("ahk_class UnrealWindow")
     }
 
     ; send up command for every key to remove leftover key press residues

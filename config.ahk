@@ -7,6 +7,11 @@ This class is primarily used for specific keys or optional settings like speedha
 */
 class Configuration 
 {
+    IsWarlockTest()
+    {
+        return true
+    }
+
     ; shut down the computer if no bns processes are found anymore (dc or maintenance)
     ShutdownComputerAfterCrash()
     {
@@ -20,21 +25,38 @@ class Configuration
     }
 
     ; which stage to farm
-    SetAerodromeStage()
+    AerodromeStage()
     {
-        send 51
+        return 1
+    }
+
+    ; whatever we want to do if health is critical (f.e. hmb/drinking potions)
+    CriticalHpAction()
+    {
+        loop, 15 {
+            ; ToDo: change to F for auto hmb for BM when done
+            send z
+            sleep 5
+        }
+
+        Configuration.UseHealthPotion()
     }
 
     ; hotkey where the buff food is placed
     UseBuffFood()
     {
-        send 6
+        ;send 6
     }
 
     ; hotkey where the field repair hammers are placed
     UseRepairTools()
     {
-        send 7
+        ;send 7
+    }
+
+    UseHealthPotion()
+    {
+        send 5
     }
 
     ; after how many runs should we repair our weapon
@@ -50,16 +72,58 @@ class Configuration
         send {ShiftUp}{f4 up}
     }
 
+    ; enable speed hack (sanic or normal ce speedhack)
+    EnableLobbySpeedhack()
+    {
+        send {Numpad7}
+    }
+
+    ; disable movement speed hack (sanic or normal ce speedhack)
+    DisableLobbySpeedhack()
+    {
+        send {Numpad3}
+    }
+
     ; enable movement speed hack (sanic or normal ce speedhack)
     EnableMovementSpeedhack()
     {
-        send {Numpad7}
+        send {Numpad6}
     }
 
     ; disable movement speed hack (sanic or normal ce speedhack)
     DisableMovementSpeedhack()
     {
         send {Numpad3}
+    }
+
+    EnableClipBossOne()
+    {
+        send {Numpad8}
+    }
+
+    DisableClipBossOne()
+    {
+        send {Numpad9}
+    }
+
+    EnableClipBossTwo()
+    {
+        send {Numpad4}
+    }
+
+    DisableClipBossTwo()
+    {
+        send {Numpad5}
+    }
+
+    EnableClip()
+    {
+        send {Home}
+    }
+
+    DisableClip()
+    {
+        send {End}
     }
 
     ; configured speed value
@@ -74,5 +138,15 @@ class Configuration
         send {alt down}{f10 down}
         sleep 1000
         send {alt up}{f10 up}
+    }
+
+    UseTalisman()
+    {
+        send r
+    }
+
+    InviteDuo()
+    {
+        send /invite "Lunar Tempest"
     }
 }

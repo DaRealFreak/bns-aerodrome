@@ -25,8 +25,11 @@ Numpad0::
     log.initalizeNewLogFile(1)
     log.addLogEntry("$time: starting aerodrome exp farm")
 
+    ; clear leftover states before starting
+    Sync.ClearStates()
+
     loop {
-        if (!Aerodrome.EnterDungeon()) {
+        if (!Aerodrome.EnterLobby(true)) {
             break
         }
         sleep 250
@@ -35,10 +38,15 @@ Numpad0::
     return
 
 Numpad1::
-    global log := new LogClass("aerodrome")
-    log.initalizeNewLogFile(1)
-    log.addLogEntry("$time: starting aerodrome exp farm")
-    Aerodrome.EnterLobby()
+    Camera.ResetCamera()
+
+    ;Aerodrome.MakePortalBoss(1)
+
+    return
+
+Numpad2::
+    Aerodrome.MakePortalBoss(2)
+
     return
 
 *NumPadDot::

@@ -8,6 +8,21 @@ If the resolution and ClientConfiguration.xml are not identical you'll always ha
 */
 class UserInterface
 {
+    MoveMouseOverMap()
+    {
+        MouseMove, 1651, 251
+    }
+
+    ClickTrackingMap()
+    {
+        MouseClick, left, 1891, 51
+    }
+
+    MapFixpoint()
+    {
+        return Utility.GetColor(1518,127) == "0x636437"
+    }
+
     ClickExit()
     {
         MouseClick, left, 1770, 870
@@ -23,9 +38,39 @@ class UserInterface
         click up
     }
 
+    ClickReady()
+    {
+        MouseClick, left, 962, 1035
+    }
+
+    ClickChat()
+    {
+        MouseClick, left, 158, 887
+    }
+
     ClickEnterDungeon()
     {
         MouseClick, left, 1032, 1034
+    }
+
+    IsDuoReady()
+    {
+        return Utility.GetColor(984,120) == "0x38D454"
+    }
+
+    HasPartyMemberInLobby()
+    {
+        return Utility.GetColor(965,120) == "0xD4B449" || Utility.GetColor(980,120) == "0xD4B449"
+    }
+
+    IsReady()
+    {
+        return Utility.GetColor(888,123) == "0x52A745" || Utility.GetColor(899,123) == "0x5FC150"
+    }
+
+    IsHpBelowCritical()
+    {
+        return Utility.GetColor(1038,795) != "0xE0280C"
     }
 
     ; whenever you want to refresh your exp buff food (basically one of the last pixels which will become darker)
@@ -57,9 +102,26 @@ class UserInterface
         return Utility.GetColor(1038,899) == "0x6F542B"
     }
 
+    ; any position on the loot icon
+    IsLootIconVisible()
+    {
+        return Utility.GetColor(1149,729) == "0xFFAA00"
+    }
+
+    IsPortalIconVisible()
+    {
+        return Utility.GetColor(1152,715) == "0xFEAA00"
+    }
+
+    IsBossHealthbarVisible()
+    {
+        return Utility.GetColor(780,107) == "0xF05311"
+    }
+
     ; sprint bar to check if we're out of combat
     IsOutOfCombat()
     {
-        return Utility.GetColor(809,836) == "0xA5B721"
+		col := Utility.GetColor(809,836)
+        return col == "0xA6B721" || col == "0xA5B721"
     }
 }
