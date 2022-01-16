@@ -23,10 +23,7 @@ RemoveToolTip:
 Numpad0::
     global log := new LogClass("aerodrome")
     log.initalizeNewLogFile(1)
-    log.addLogEntry("$time: starting aerodrome exp farm")
-
-    ; clear leftover states before starting
-    Sync.ClearStates()
+    log.addLogEntry("$time: starting aerodrome farm")
 
     loop {
         if (!Aerodrome.EnterLobby(true)) {
@@ -38,14 +35,24 @@ Numpad0::
     return
 
 Numpad1::
-    Camera.ResetCamera()
+    global log := new LogClass("aerodrome_carry")
+    log.initalizeNewLogFile(1)
+    log.addLogEntry("$time: starting aerodrome farm")
 
-    ;Aerodrome.MakePortalBoss(1)
+    ; clear leftover states before starting
+    Sync.ClearStates()
+
+    loop {
+        if (!Aerodrome.EnterLobby(false)) {
+            break
+        }
+        sleep 250
+    }
 
     return
 
 Numpad2::
-    Aerodrome.MakePortalBoss(2)
+    tooltip % (Camera.ResetCamera())
 
     return
 

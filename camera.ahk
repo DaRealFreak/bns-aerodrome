@@ -21,17 +21,26 @@ class Camera
 
     ResetCamera()
     {
+        ; initial turn since we're close to 180° away from the portal
+        Camera.SpinPxls(1400)
+
+        ; make sure map is not transparent
+        if (UserInterface.IsMapTransparent()) {
+            Configuration.ToggleMapTransparency()
+            sleep 500
+        }
+
         send {AltDown}
         sleep 250
 
         UserInterface.ClickTrackingMap()
-        sleep 250
+        sleep 350
 
         UserInterface.MoveMouseOverMap()
         sleep 50
 
         ; zoom out completely
-        loop, 5 {
+        loop, 7 {
             MouseClick, WheelUp
             sleep 75
         }
@@ -47,6 +56,8 @@ class Camera
             Camera.SpinPxls(1)
             total += 1
         }
+
+        log.addLogEntry("$time: had to spin camera by " total " pixels (" Utility.RoundDecimal(total / this.fullTurn) ")")
 
         return true
     }

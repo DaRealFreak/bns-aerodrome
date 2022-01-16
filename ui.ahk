@@ -18,6 +18,11 @@ class UserInterface
         MouseClick, left, 1891, 51
     }
 
+    IsMapTransparent()
+    {
+        return Utility.GetColor(1377,310) != "0xBCA984"
+    }
+
     MapFixpoint()
     {
         return Utility.GetColor(1518,127) == "0x636437"
@@ -88,7 +93,7 @@ class UserInterface
     ; literally any UI element in lobby and ingame, just used for checking if we're out of the loading screen, I'm using here my unity bar and enter button
     IsOutOfLoadingScreen()
     {
-        return Utility.GetColor(75,1049) == "0x000001" || UserInterface.IsInF8Lobby()
+        return Utility.GetColor(68,1055) == "0x000001" || UserInterface.IsInF8Lobby()
     }
 
     IsInF8Lobby()

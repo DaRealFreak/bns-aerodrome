@@ -9,7 +9,18 @@ class Configuration
 {
     IsWarlockTest()
     {
-        return true
+        return false
+    }
+
+    ; which stage to farm
+    AerodromeStage()
+    {
+        return 17
+    }
+
+    InviteDuo()
+    {
+        send /invite "Lunar Tempest"
     }
 
     ; shut down the computer if no bns processes are found anymore (dc or maintenance)
@@ -22,12 +33,6 @@ class Configuration
     ShouldUseBuffFood()
     {
         return true
-    }
-
-    ; which stage to farm
-    AerodromeStage()
-    {
-        return 1
     }
 
     ; whatever we want to do if health is critical (f.e. hmb/drinking potions)
@@ -51,7 +56,7 @@ class Configuration
     ; hotkey where the field repair hammers are placed
     UseRepairTools()
     {
-        ;send 7
+        send 7
     }
 
     UseHealthPotion()
@@ -63,6 +68,11 @@ class Configuration
     UseRepairToolsAfterRunCount()
     {
         return 7
+    }
+
+    ToggleMapTransparency()
+    {
+        send n
     }
 
     ToggleAutoCombat()
@@ -143,10 +153,5 @@ class Configuration
     UseTalisman()
     {
         send r
-    }
-
-    InviteDuo()
-    {
-        send /invite "Lunar Tempest"
     }
 }

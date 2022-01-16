@@ -40,4 +40,13 @@ class Utility
             }
         }
     }
+
+    RoundDecimal(value)
+    {
+        return RegExReplace(value,"(\.\d{2})\d*","$1")
+    }
+
+    ThousandsSep(value, s=",") {
+        return RegExReplace(value, "\G\d+?(?=(\d{3})+(?:\D|$))", "$0" s)
+    }
 }

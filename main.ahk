@@ -107,7 +107,18 @@ class Aerodrome
         this.runStartTimeStamp := A_TickCount
         this.diedInRun := false
 
-        if (!this.warlock || Configuration.IsWarlockTest()) {
+        if (this.warlock) {
+            Sync.SetState("warlock")
+        } else {
+            Sync.SetState("carry")
+        }
+
+        ; sleep for both characters in lobby
+        while (!(Sync.HasState("warlock") && Sync.HasState("carry"))) {
+            sleep 25
+        }
+
+        if (this.warlock) {
             if (!Configuration.IsWarlockTest()) {
                 lastInvite := 0
                 while (!UserInterface.IsDuoReady() && Utility.GameActive()) {
@@ -148,9 +159,6 @@ class Aerodrome
 
             Aerodrome.DisableSpeedHack()
         } else {
-            ; receiver clears previous states to prevent desyncs
-            Sync.ClearStates()
-
             while (!UserInterface.HasPartyMemberInLobby()) {
                 ; click somewhere so we're not in the chatbox anymore
                 UserInterface.ClickReady()
@@ -167,6 +175,10 @@ class Aerodrome
 
         Aerodrome.WaitLoadingScreen()
 
+        if (this.warlock) {
+            Sync.ClearStates()
+        }
+
         return Aerodrome.EnterDungeon()
     }
 
@@ -181,9 +193,9 @@ class Aerodrome
 
         start := A_TickCount
         while (!UserInterface.IsInLoadingScreen()) {
-            if (mod(Round(A_TickCount / 1000), 5) == 0) {
+            if (mod(Round(A_TickCount / 1000), 3) == 0) {
                 Random, rand, 1, 10
-                if (rand >= 5) {
+                if (rand >= 3) {
                     send {Space down}
                     sleep 200
                     send {Space up}
@@ -250,6 +262,10 @@ class Aerodrome
 
     MoveFirstBoss()
     {
+        if (Sync.HasState("exit_dungeon")) {
+            return Aerodrome.ExitDungeon()
+        }
+
         log.addLogEntry("$time: moving to first boss")
 
         while (UserInterface.IsPortalIconVisible()) {
@@ -268,7 +284,7 @@ class Aerodrome
 
                 Configuration.ClipShadowPlay()
 
-                ; ToDo Sync
+                Sync.SetState("exit_dungeon")
                 return Aerodrome.ExitDungeon()
             }
 
@@ -284,6 +300,20 @@ class Aerodrome
 
     FightFirstBoss()
     {
+        if (this.warlock) {
+            Sync.SetState("warlock_b1")
+        } else {
+            Sync.SetState("carry_b1")
+        }
+
+        ; sleep for both characters in front of b1
+        while (!(Sync.HasState("warlock_b1") && Sync.HasState("carry_b1"))) {
+            if (Sync.HasState("exit_dungeon")) {
+                return Aerodrome.ExitDungeon()
+            }
+            sleep 25
+        }
+
         log.addLogEntry("$time: fighting first boss")
 
         Configuration.ToggleAutoCombat()
@@ -321,7 +351,7 @@ class Aerodrome
                 this.diedInRun := true
                 Aerodrome.WaitLoadingScreen()
 
-                ; ToDo: sync
+                Sync.SetState("exit_dungeon")
                 return Aerodrome.ExitDungeon()
             }
 
@@ -332,9 +362,11 @@ class Aerodrome
         if (!Camera.ResetCamera()) {
             log.addLogEntry("$time: unable to reset camera, resetting run")
             Sync.SetState("exit_dungeon")
+
+            return Aerodrome.ExitDungeon()
         }
         
-        ExitApp
+        return Aerodrome.MoveToPortalToSecondBoss()
     }
 
     MoveToPortalToSecondBoss()
@@ -342,10 +374,21 @@ class Aerodrome
         log.addLogEntry("$time: moving to portal to second boss")
 
         send {w down}
+        send {Shift}
+
+        start := A_TickCount
         while (!UserInterface.IsInLoadingScreen()) {
+            ; timeout, probably stuck
+            if (A_TickCount > start + 20*1000) {
+                Sync.SetState("exit_dungeon")
+                return Aerodrome.ExitDungeon()
+            }
+
             sleep 25
         }
+
         send {w up}
+
         Aerodrome.DisableMovementSpeedhack()
 
         Aerodrome.WaitLoadingScreen()
@@ -357,29 +400,134 @@ class Aerodrome
     {
         log.addLogEntry("$time: moving to second boss")
 
-        ; ToDo: portal for wl, wait and run straight for carry
+        if (this.warlock) {
+            sleep 1*1000
+
+            Aerodrome.MakePortalBoss(2)
+
+            ; wait to get out of combat again for sprinting
+            while (!UserInterface.IsOutOfCombat()) {
+                sleep 25
+            }
+
+            Sync.SetState("port_b2")
+        } else {
+            start := A_TickCount
+            while (A_TickCount < start + 60*1000) {
+                if (Sync.HasState("port_b2")) {
+                    break
+                }
+
+                if (Sync.HasState("exit_dungeon")) {
+                    log.addLogEntry("$time: warlock failed to reset camera, abandon run")
+
+                    return Aerodrome.ExitDungeon()
+                }
+            }
+        }
+
+        Configuration.EnableMovementSpeedhack()
+        sleep 1.5*1000
+
+        send {w down}
+        send {Shift}
+
+        start := A_TickCount
+        while (!UserInterface.IsBossHealthbarVisible()) {
+            if (A_TickCount > start+(60*1000 / (Configuration.MovementSpeedhackValue()))) {
+                log.addLogEntry("$time: couldn't reach second boss, probably got stuck somewhere")
+
+                Configuration.ClipShadowPlay()
+
+                Sync.SetState("exit_dungeon")
+                return Aerodrome.ExitDungeon()
+            }
+
+            sleep 25
+        }
+
+        send {w up}
+
+        Configuration.DisableMovementSpeedhack()
+
+        return Aerodrome.FightSecondBoss()
     }
 
     FightSecondBoss()
     {
-        log.addLogEntry("$time: fighting second boss")
-
-        send 2
-        sleep 250
-
-        start := A_TickCount
-        while (A_TickCount < start + 15*1000) {
-            if (UserInterface.IsLootIconVisible()) {
-                break
-            }
-            send t
-            sleep 15
+        if (this.warlock) {
+            Sync.SetState("warlock_b2")
+        } else {
+            Sync.SetState("carry_b2")
         }
 
-        sleep 500
-        Aerodrome.LootBoss()
+        ; sleep for both characters in front of b1
+        while (!(Sync.HasState("warlock_b2") && Sync.HasState("carry_b2"))) {
+            if (Sync.HasState("exit_dungeon")) {
+                return Aerodrome.ExitDungeon()
+            }
+            sleep 25
+        }
 
-        return Aerodrome.ExitDynamic()
+        log.addLogEntry("$time: fighting second boss")
+
+        Configuration.EnableMovementSpeedhack()
+        if (this.warlock) {
+            send {w down}
+            sleep 2*1000 / Configuration.MovementSpeedhackValue()
+            send {w up}
+            sleep 250
+        }
+
+        Configuration.ToggleAutoCombat()
+
+        ; sleep to get into combat, else the check will instantly think the fight is over
+        sleep 10*1000
+
+        start := A_TickCount
+        while (true) {
+            if (UserInterface.IsOutOfCombat() || UserInterface.IsReviveVisible()) {
+                Configuration.ToggleAutoCombat()
+                break
+            }
+
+            if (Utility.GameActive()) {
+                ; use talisman if in the game
+                Configuration.UseTalisman()
+
+                if (UserInterface.IsHpBelowCritical()) {
+                    Configuration.CriticalHpAction()
+                }
+
+                sleep 25
+            }
+
+            if (A_TickCount > (start + 6*60*1000)) {
+                ; timeout for autocombat are 6 minutes, probably being stuck somewhere, safety exit over lobby which works even when dead
+                Configuration.DisableAnimationSpeedhack()
+                return Aerodrome.ExitOverLobby()
+            }
+
+            if (UserInterface.IsInLoadingScreen()) {
+                ; autocombat pressed 4 without ahk noticing
+                this.diedInRun := true
+                Aerodrome.WaitLoadingScreen()
+
+                return Aerodrome.ExitDungeon()
+            }
+
+            sleep 25
+        }
+
+        if (this.warlock) {
+            ; we expect wl to die but still want to at least get the dynamic
+            Sync.WaitForState("exit_dungeon", 5*60*1000)
+        } else {
+            ; we can safely exit with the warlock char now too
+            Sync.SetState("exit_dungeon")
+        }
+
+        return Aerodrome.ExitDungeon()
     }
 
     MakePortalBoss(boss)
@@ -460,27 +608,6 @@ class Aerodrome
         return Aerodrome.ExitDungeon()
     }
 
-    ExitDynamic()
-    {
-        log.addLogEntry("$time: taking dynamic")
-
-        send {AltDown}
-        sleep 150
-        MouseClick, Left, 1628, 690
-        sleep 150
-        send {AltUp}
-
-        sleep 500
-        send y
-        sleep 500
-        send n
-        sleep 500
-        send y
-        sleep 500
-
-        return Aerodrome.ExitDungeon()
-    }
-
     Revive()
     {
         Aerodrome.EnableSpeedHack()
@@ -526,8 +653,15 @@ class Aerodrome
             sleep 1*1000
 
             UserInterface.ClickExit()
-            sleep 1*1000
+            sleep 1000
             send y
+            sleep 1000
+            send y
+            sleep 1000
+            send n
+            sleep 1000
+            send y
+            sleep 1000
         }
 
         if (!this.diedInRun) {
