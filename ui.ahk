@@ -36,6 +36,11 @@ class UserInterface
     ; start holding mouse right side of the stage number and release it left of the stage number to edit
     EditStage()
     {
+        loop, 5 {
+            MouseClick, Left, 1636, 740
+            sleep 250
+        }
+
         MouseClick, Left, 1738, 476
         click down
         sleep 150

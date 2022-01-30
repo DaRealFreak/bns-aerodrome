@@ -15,12 +15,12 @@ class Configuration
     ; which stage to farm
     AerodromeStage()
     {
-        return 17
+        return 21
     }
 
     InviteDuo()
     {
-        send /invite "Lunar Tempest"
+        send /invite "StoneRRF BM"
     }
 
     ; shut down the computer if no bns processes are found anymore (dc or maintenance)
@@ -113,12 +113,12 @@ class Configuration
 
     DisableClipBossOne()
     {
-        send {Numpad9}
+        send {Numpad4}
     }
 
     EnableClipBossTwo()
     {
-        send {Numpad4}
+        send {Numpad9}
     }
 
     DisableClipBossTwo()
@@ -128,18 +128,16 @@ class Configuration
 
     EnableClip()
     {
-        send {Home}
     }
 
     DisableClip()
     {
-        send {End}
     }
 
     ; configured speed value
     MovementSpeedhackValue()
     {
-        return 5.0
+        return 5.5
     }
 
     ; shortcut for shadowplay clip in case we want to debug how we got stuck or got to this point

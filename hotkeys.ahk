@@ -51,8 +51,13 @@ Numpad1::
 
     return
 
-Numpad2::
-    tooltip % (Camera.ResetCamera())
+F3::
+    Aerodrome.MakePortalBoss(1)
+
+    return
+
+F4::
+    Aerodrome.MakePortalBoss(2)
 
     return
 

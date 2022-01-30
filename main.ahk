@@ -98,10 +98,20 @@ class Aerodrome
         }
     }
 
+    ; check state of game and check sync if the other computer eventually crashed
+    CheckGameActivity()
+    {
+        if (!Utility.GameActive() || Sync.HasState("game_crash")) {
+            Sync.SetState("game_crash")
+            Reload
+        }
+    }
+
     EnterLobby(warlock)
     {
         this.warlock := warlock
 
+        Aerodrome.CheckGameActivity()
         log.addLogEntry("$time: moving to dungeon")
 
         this.runStartTimeStamp := A_TickCount
@@ -114,7 +124,7 @@ class Aerodrome
         }
 
         ; sleep for both characters in lobby
-        while (!(Sync.HasState("warlock") && Sync.HasState("carry"))) {
+        while (!Configuration.IsWarlockTest() && !(Sync.HasState("warlock") && Sync.HasState("carry"))) {
             sleep 25
         }
 
@@ -124,6 +134,11 @@ class Aerodrome
                 while (!UserInterface.IsDuoReady() && Utility.GameActive()) {
                     if (lastInvite + 3*1000 <= A_TickCount) {
                         UserInterface.ClickChat()
+                        ; clear possible leftovers in chat
+                        loop, 10 {
+                            send {BackSpace}
+                            sleep 2
+                        }
                         Configuration.InviteDuo()
                         send {Enter}
                         lastInvite := A_TickCount
@@ -135,15 +150,13 @@ class Aerodrome
 
             Aerodrome.EnableSpeedHack()
 
-            while (!UserInterface.IsInLoadingScreen()) {
+            while (!UserInterface.IsInLoadingScreen() && Utility.GameActive()) {
                 ; sometimes stage selection is out of focus, so we try to set it twice
                 stage := Configuration.AerodromeStage()
-                loop, 2 {
-                    UserInterface.EditStage()
-                    sleep 250
-                    send %stage%
-                    sleep 250
-                }
+                UserInterface.EditStage()
+                sleep 250
+                send %stage%
+                sleep 250
 
                 UserInterface.ClickEnterDungeon()
                 start := A_TickCount
@@ -159,14 +172,14 @@ class Aerodrome
 
             Aerodrome.DisableSpeedHack()
         } else {
-            while (!UserInterface.HasPartyMemberInLobby()) {
+            while (!UserInterface.HasPartyMemberInLobby() && Utility.GameActive()) {
                 ; click somewhere so we're not in the chatbox anymore
                 UserInterface.ClickReady()
                 ; accept invites
                 send y
             }
 
-            while (!UserInterface.IsReady()) {
+            while (!UserInterface.IsReady() && Utility.GameActive()) {
                 ; click ready
                 UserInterface.ClickReady()
                 sleep 1*1000
@@ -184,6 +197,7 @@ class Aerodrome
 
     EnterDungeon()
     {
+        Aerodrome.CheckGameActivity()
         log.addLogEntry("$time: entering dungeon")
 
         send {w down}
@@ -214,9 +228,8 @@ class Aerodrome
 
     MoveToDummies()
     {
-		if (!this.warlock) {
-            Aerodrome.CheckRepair()
-        }
+        Aerodrome.CheckGameActivity()
+        Aerodrome.CheckRepair()
 
 		sleep 1*1000
 
@@ -262,6 +275,7 @@ class Aerodrome
 
     MoveFirstBoss()
     {
+        Aerodrome.CheckGameActivity()
         if (Sync.HasState("exit_dungeon")) {
             return Aerodrome.ExitDungeon()
         }
@@ -283,6 +297,7 @@ class Aerodrome
                 log.addLogEntry("$time: couldn't reach first boss, probably got stuck somewhere")
 
                 Configuration.ClipShadowPlay()
+                this.diedInRun := true
 
                 Sync.SetState("exit_dungeon")
                 return Aerodrome.ExitDungeon()
@@ -300,6 +315,7 @@ class Aerodrome
 
     FightFirstBoss()
     {
+        Aerodrome.CheckGameActivity()
         if (this.warlock) {
             Sync.SetState("warlock_b1")
         } else {
@@ -307,7 +323,7 @@ class Aerodrome
         }
 
         ; sleep for both characters in front of b1
-        while (!(Sync.HasState("warlock_b1") && Sync.HasState("carry_b1"))) {
+        while (!Configuration.IsWarlockTest() && !(Sync.HasState("warlock_b1") && Sync.HasState("carry_b1"))) {
             if (Sync.HasState("exit_dungeon")) {
                 return Aerodrome.ExitDungeon()
             }
@@ -371,6 +387,7 @@ class Aerodrome
 
     MoveToPortalToSecondBoss()
     {
+        Aerodrome.CheckGameActivity()
         log.addLogEntry("$time: moving to portal to second boss")
 
         send {w down}
@@ -379,7 +396,7 @@ class Aerodrome
         start := A_TickCount
         while (!UserInterface.IsInLoadingScreen()) {
             ; timeout, probably stuck
-            if (A_TickCount > start + 20*1000) {
+            if (A_TickCount > start + 40*1000) {
                 Sync.SetState("exit_dungeon")
                 return Aerodrome.ExitDungeon()
             }
@@ -398,6 +415,7 @@ class Aerodrome
 
     MoveToSecondBoss()
     {
+        Aerodrome.CheckGameActivity()
         log.addLogEntry("$time: moving to second boss")
 
         if (this.warlock) {
@@ -438,6 +456,7 @@ class Aerodrome
                 log.addLogEntry("$time: couldn't reach second boss, probably got stuck somewhere")
 
                 Configuration.ClipShadowPlay()
+                this.diedInRun := true
 
                 Sync.SetState("exit_dungeon")
                 return Aerodrome.ExitDungeon()
@@ -455,6 +474,7 @@ class Aerodrome
 
     FightSecondBoss()
     {
+        Aerodrome.CheckGameActivity()
         if (this.warlock) {
             Sync.SetState("warlock_b2")
         } else {
@@ -462,7 +482,7 @@ class Aerodrome
         }
 
         ; sleep for both characters in front of b1
-        while (!(Sync.HasState("warlock_b2") && Sync.HasState("carry_b2"))) {
+        while (!Configuration.IsWarlockTest() && !(Sync.HasState("warlock_b2") && Sync.HasState("carry_b2"))) {
             if (Sync.HasState("exit_dungeon")) {
                 return Aerodrome.ExitDungeon()
             }
@@ -474,9 +494,10 @@ class Aerodrome
         Configuration.EnableMovementSpeedhack()
         if (this.warlock) {
             send {w down}
-            sleep 2*1000 / Configuration.MovementSpeedhackValue()
+            sleep 1*1000 / Configuration.MovementSpeedhackValue()
             send {w up}
             sleep 250
+            send z
         }
 
         Configuration.ToggleAutoCombat()
@@ -519,7 +540,7 @@ class Aerodrome
             sleep 25
         }
 
-        if (this.warlock) {
+        if (this.warlock && !Configuration.IsWarlockTest()) {
             ; we expect wl to die but still want to at least get the dynamic
             Sync.WaitForState("exit_dungeon", 5*60*1000)
         } else {
@@ -532,6 +553,7 @@ class Aerodrome
 
     MakePortalBoss(boss)
     {
+        Aerodrome.CheckGameActivity()
         ; activate clip
         loop, 5 {
             Configuration.EnableClip()
@@ -591,6 +613,7 @@ class Aerodrome
 
     ExitOverLobby()
     {
+        Aerodrome.CheckGameActivity()
         log.addLogEntry("$time: exiting over lobby")
         while (!UserInterface.IsInLoadingScreen()) {            
             send {AltDown}
@@ -637,7 +660,7 @@ class Aerodrome
         while (!UserInterface.IsInF8Lobby()) {
             if (!Utility.GameActive()) {
                 log.addLogEntry("$time: couldn't find game process, exiting")
-                ExitApp
+                Reload
             }
 
             ; revive to prevent appearing in death logs
@@ -677,6 +700,38 @@ class Aerodrome
         Aerodrome.LogStatistics()
 
         return true
+    }
+
+    LogStatistics()
+    {
+        failedRuns := this.failedRuns.Length()
+        failedRate := (failedRuns / this.runCount)
+        successRate := 1.0 - failedRate
+
+        averageRunTime := 0
+        for _, v in this.successfulRuns {
+            averageRunTime += v
+        }
+        averageRunTime /= this.successfulRuns.Length()
+
+        if (!averageRunTime) {
+            averageRunTime := 0
+        }
+
+        averageFailRunTime := 0
+        for _, v in this.failedRuns {
+            averageFailRunTime += v
+        }
+        averageFailRunTime /= this.failedRuns.Length()
+
+        if (!averageFailRunTime) {
+            averageFailRunTime := 0
+        }
+
+        averageRunsHour := 3600 / (averageRunTime * successRate + averageFailRunTime * failedRate)
+        expectedSuccessfulRunsPerHour := averageRunsHour * successRate
+
+        log.addLogEntry("$time: runs done: " this.runCount " (died in " (failedRuns) " out of " this.runCount " runs (" Utility.RoundDecimal(failedRate * 100) "%), average run time: " Utility.RoundDecimal(averageRunTime) " seconds)")
     }
 
     ; repair the weapon
