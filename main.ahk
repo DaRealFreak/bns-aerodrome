@@ -206,7 +206,13 @@ class Aerodrome
         sleep 250
 
         start := A_TickCount
-        while (!UserInterface.IsInLoadingScreen()) {
+        reachedPortal := false
+        while (A_TickCount < start + 15*1000) {
+            if (!UserInterface.IsOutOfLoadingScreen()) {
+                reachedPortal := true
+                break
+            }
+
             if (mod(Round(A_TickCount / 1000), 3) == 0) {
                 Random, rand, 1, 10
                 if (rand >= 3) {
@@ -219,6 +225,14 @@ class Aerodrome
             }
 
             sleep 25
+        }
+
+        if (!reachedPortal) {
+            ; create exit dungeon and portal states to reach portal sync point and instantly exit
+            Sync.SetState("exit_dungeon")
+            Sync.SetState("portal")
+
+            return Aerodrome.ExitDungeon()
         }
 
         Aerodrome.WaitLoadingScreen()
@@ -238,6 +252,8 @@ class Aerodrome
         if (!this.warlock) {
             sleep 0.5*1000
             Aerodrome.CheckHealth()
+            ; sleep to prevent portal icon disappearing for a split second
+            sleep 0.5*1000
 
             log.addLogEntry("$time: waiting for portal")
             Sync.WaitForState("portal")
